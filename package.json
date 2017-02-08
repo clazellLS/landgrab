@@ -1,0 +1,18 @@
+{
+  "name": "sheepdawg",
+  "version": "1.0.0",
+  "description": "A game",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.13.4",
+    "socket.io": "^1.4.5",
+    "sockjs": "^0.3.16",
+    "victor": "^1.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "test"
+  },
+  "author": "cameron lazell",
+  "license": "MIT"
+}

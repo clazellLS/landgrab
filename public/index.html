@@ -1,0 +1,159 @@
+<html>
+<head>
+    <title>LANDGRAB</title>
+    <style>
+        body { margin: 0; }
+        canvas { width: 100%; height: 100% }
+    </style>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/three.min.js"></script>
+    <script>
+        var socket = io();
+    </script>
+</head>
+<body>
+<script>
+
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera( 45, 600/400, 0.1, 1000 );
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize( 600, 400 );
+    document.body.appendChild( renderer.domElement );
+
+    camera.position.x = 600;
+    camera.position.y = 400;
+    camera.position.z = 1000;
+
+    var render = function () {
+        requestAnimationFrame( render );
+        renderer.render(scene, camera);
+    };
+
+    render();
+
+    // size of a tile in pixels
+    var tileWidth = 25;
+    var tileHeight = 25;
+
+    var playerList = [];
+
+    function addPlayer(){
+        // var player = new THREE.Mesh( new THREE.BoxGeometry( 5, 5, 1 ),new THREE.MeshBasicMaterial( { color: 0xfff000 } ));
+        // player.position.x = 25;
+        // player.position.y = 25;
+        // scene.add(player);
+        // playerList.push(player);
+        socket.emit('add player',0, 0);
+    }
+
+    function addRemotePlayers(rPlayerList){
+        rPlayerList.map((player) => {
+            var rplayer =  {
+                mesh: new THREE.Mesh( new THREE.BoxGeometry( 25, 25, 2 ),new THREE.MeshBasicMaterial( { color: 0x8c7373 } )),
+                id: player.playerPos.id
+            }
+            rplayer.mesh.position.x = player.playerPos.x;
+            rplayer.mesh.position.y = player.playerPos.y;
+            console.log('adddd',player)
+            scene.add(rplayer.mesh);
+            playerList.push(rplayer);       
+        })
+    }
+
+    function movePlayer( playPos ){
+        playerList.map((player) => {
+            playPos.map((rplayer) => {
+                if(player.id == rplayer.playerPos.id){
+                    player.mesh.position.x = rplayer.playerPos.x;
+                    player.mesh.position.y = rplayer.playerPos.y;
+                }
+            })
+
+        })
+        
+    };
+
+    function createWorld(worldmap) {
+        // create emptiness
+
+
+        drawMap(worldmap);
+    }
+
+    function drawMap(world) {
+        for (var x = 0; x < world[0][1]; x++) {
+            for (var y = 0; y < world[0][0]; y++) {
+                switch (world[x][y]) {
+                    case 0:
+                        var tile = new THREE.Mesh( new THREE.BoxGeometry( 25, 25, 0 ),new THREE.MeshBasicMaterial( { color: 196419 } ))
+                        tile.position.x = x * tileHeight;
+                        tile.position.y = y * tileWidth;
+                        scene.add(tile)
+                        break;
+                    case 1:
+                        var tile = new THREE.Mesh( new THREE.BoxGeometry( 25, 25, 0 ),new THREE.MeshBasicMaterial( { color:  0xf4ad42 } ))
+                        tile.position.x = x * tileHeight;
+                        tile.position.y = y * tileWidth;
+                        scene.add(tile)
+                        break;
+                    default:
+                        var tile = new THREE.Mesh( new THREE.BoxGeometry( 25, 25, 0 ),new THREE.MeshBasicMaterial( { color: 196419 } ))
+                        tile.position.x = x * tileHeight;
+                        tile.position.y = y * tileWidth;
+                        scene.add(tile)
+                        break;
+
+
+                }
+            }
+        }
+       // socket.emit('world created', world);
+    }
+
+    //createWorld();
+    // drawMap();
+    addPlayer();
+
+    setInterval(function(){
+        socket.emit('render');
+    },  1000/60);
+    socket.on('world created', function (world) {
+        console.log('draw')
+        drawMap(world)
+    });
+    socket.on('add playerList', function (playerList) {
+        addRemotePlayers(playerList)
+    });
+
+    socket.on('player moved', function (playPos) {
+        movePlayer( playPos );
+    });
+
+    document.onkeydown = checkKey;
+
+    function checkKey(e) {
+
+        e = e || window.event;
+        var key = '';
+        if (e.keyCode == '38') {
+            key = 'up';
+        }
+        else if (e.keyCode == '40') {
+            key = 'down';
+        }
+        else if (e.keyCode == '37') {
+            key = 'left';
+        }
+        else if (e.keyCode == '39') {
+            key = 'right';
+        }
+        socket.emit('move player', key);
+    }
+
+
+
+</script>
+
+</body>
+</html>
